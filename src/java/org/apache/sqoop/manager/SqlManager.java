@@ -18,6 +18,27 @@
 
 package org.apache.sqoop.manager;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.sqoop.SqoopOptions;
+import org.apache.sqoop.accumulo.AccumuloUtil;
+import org.apache.sqoop.hbase.HBaseUtil;
+import org.apache.sqoop.mapreduce.AccumuloImportJob;
+import org.apache.sqoop.mapreduce.DataDrivenImportJob;
+import org.apache.sqoop.mapreduce.HBaseBulkImportJob;
+import org.apache.sqoop.mapreduce.HBaseImportJob;
+import org.apache.sqoop.mapreduce.ImportJobBase;
+import org.apache.sqoop.mapreduce.JdbcCallExportJob;
+import org.apache.sqoop.mapreduce.JdbcExportJob;
+import org.apache.sqoop.mapreduce.JdbcUpdateExportJob;
+import org.apache.sqoop.mapreduce.db.DataDrivenDBInputFormat;
+import org.apache.sqoop.util.ExportException;
+import org.apache.sqoop.util.ImportException;
+import org.apache.sqoop.util.LoggingUtils;
+import org.apache.sqoop.util.ResultSetPrinter;
+import org.apache.sqoop.util.SqlTypeMap;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -36,28 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.sqoop.accumulo.AccumuloUtil;
-import org.apache.sqoop.mapreduce.AccumuloImportJob;
-import org.apache.sqoop.mapreduce.HBaseBulkImportJob;
-import org.apache.sqoop.mapreduce.JdbcCallExportJob;
-import org.apache.sqoop.util.LoggingUtils;
-import org.apache.sqoop.util.SqlTypeMap;
-
-import org.apache.sqoop.SqoopOptions;
-import org.apache.sqoop.hbase.HBaseUtil;
-import org.apache.sqoop.mapreduce.DataDrivenImportJob;
-import org.apache.sqoop.mapreduce.HBaseImportJob;
-import org.apache.sqoop.mapreduce.ImportJobBase;
-import org.apache.sqoop.mapreduce.JdbcExportJob;
-import org.apache.sqoop.mapreduce.JdbcUpdateExportJob;
-import org.apache.sqoop.mapreduce.db.DataDrivenDBInputFormat;
-import org.apache.sqoop.util.ExportException;
-import org.apache.sqoop.util.ImportException;
-import org.apache.sqoop.util.ResultSetPrinter;
 
 /**
  * ConnManager implementation for generic SQL-compliant database.
@@ -1018,11 +1017,19 @@ public abstract class SqlManager
   public long getTableRowCount(String tableName) throws SQLException {
     release(); // Release any previous ResultSet
 
-    // Escape used table name
-    tableName = escapeTableName(tableName);
+    return getRowCount("SELECT COUNT(*) FROM " + escapeTableName(tableName));
+  }
 
+  @Override
+  public long getTableRowCountByQuery(String sqlQuery) throws SQLException{
+    release(); // Release any previous ResultSet
+
+    return getRowCount("SELECT COUNT(*) FROM (" + sqlQuery + ")");
+  }
+
+  private long getRowCount(String countQuery) throws SQLException {
     long result = -1;
-    String countQuery = "SELECT COUNT(*) FROM " + tableName;
+
     Statement stmt = null;
     ResultSet rset = null;
     try {
@@ -1032,8 +1039,8 @@ public abstract class SqlManager
       rset.next();
       result = rset.getLong(1);
     } catch (SQLException ex) {
-      LoggingUtils.logAll(LOG, "Unable to query count * for table "
-        + tableName, ex);
+      LoggingUtils.logAll(LOG, "Unable to query count * for query: "
+              + countQuery, ex);
       throw ex;
     } finally {
       if (rset != null) {

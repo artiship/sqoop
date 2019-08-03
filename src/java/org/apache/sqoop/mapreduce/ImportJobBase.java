@@ -18,12 +18,6 @@
 
 package org.apache.sqoop.mapreduce;
 
-import org.apache.sqoop.SqoopOptions;
-import org.apache.sqoop.config.ConfigurationHelper;
-import org.apache.sqoop.io.CodecMap;
-import org.apache.sqoop.manager.ImportJobContext;
-import org.apache.sqoop.orm.TableClassName;
-import org.apache.sqoop.util.ImportException;
 import org.apache.avro.file.DataFileConstants;
 import org.apache.avro.mapred.AvroJob;
 import org.apache.commons.logging.Log;
@@ -40,7 +34,14 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.apache.sqoop.SqoopOptions;
+import org.apache.sqoop.config.ConfigurationHelper;
+import org.apache.sqoop.io.CodecMap;
+import org.apache.sqoop.manager.ConnManager;
+import org.apache.sqoop.manager.ImportJobContext;
 import org.apache.sqoop.mapreduce.hcat.SqoopHCatUtilities;
+import org.apache.sqoop.orm.TableClassName;
+import org.apache.sqoop.util.ImportException;
 import org.apache.sqoop.util.PerfCounters;
 import org.apache.sqoop.validation.ValidationContext;
 import org.apache.sqoop.validation.ValidationException;
@@ -277,7 +278,7 @@ public class ImportJobBase extends JobBase {
       completeImport(job);
 
       if (options.isValidationEnabled()) {
-        validateImport(tableName, conf, job);
+        validateImport(options.getSqlQuery(), conf, job);
       }
 
       if (options.doHiveImport() || isHCatJob) {
@@ -303,12 +304,17 @@ public class ImportJobBase extends JobBase {
   protected void completeImport(Job job) throws IOException, ImportException {
   }
 
-  protected void validateImport(String tableName, Configuration conf, Job job)
+  @Override
+  protected long getRowCountFromDB(ConnManager connManager, String sqlQuery) throws SQLException {
+    return connManager.getTableRowCountByQuery(sqlQuery);
+  }
+
+  protected void validateImport(String sqlQuery, Configuration conf, Job job)
     throws ImportException {
     LOG.debug("Validating imported data.");
     try {
       ValidationContext validationContext = new ValidationContext(
-        getRowCountFromDB(context.getConnManager(), tableName), // source
+        getRowCountFromDB(context.getConnManager(), sqlQuery), // source
         getRowCountFromHadoop(job));                            // target
 
       doValidate(options, conf, validationContext);
