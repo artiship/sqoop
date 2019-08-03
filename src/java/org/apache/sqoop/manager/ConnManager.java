@@ -870,6 +870,8 @@ public abstract class ConnManager {
     return options.getParquetConfiguratorImplementation().createFactory();
   }
 
-  public abstract long getTableRowCountByQuery(String sqlQuery) throws SQLException;
+  public long getTableRowCountByQuery(String sqlQuery) throws SQLException {
+    throw new UnsupportedOperationException();
+  }
 }
 
