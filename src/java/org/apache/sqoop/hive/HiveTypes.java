@@ -18,14 +18,14 @@
 
 package org.apache.sqoop.hive;
 
-import java.sql.Types;
-
 import org.apache.avro.Schema;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.sqoop.SqoopOptions;
 import org.apache.sqoop.config.ConfigurationConstants;
+
+import java.sql.Types;
 
 import static org.apache.avro.LogicalTypes.Decimal;
 
@@ -55,9 +55,11 @@ public final class HiveTypes {
   public static String toHiveType(int sqlType) {
 
       switch (sqlType) {
-          case Types.INTEGER:
+          case Types.TINYINT:
           case Types.SMALLINT:
-              return HIVE_TYPE_INT;
+          case Types.INTEGER:
+          case Types.BIGINT:
+              return HIVE_TYPE_BIGINT;
           case Types.VARCHAR:
           case Types.CHAR:
           case Types.LONGVARCHAR:
@@ -78,10 +80,6 @@ public final class HiveTypes {
           case Types.BIT:
           case Types.BOOLEAN:
               return HIVE_TYPE_BOOLEAN;
-          case Types.TINYINT:
-              return HIVE_TYPE_TINYINT;
-          case Types.BIGINT:
-              return HIVE_TYPE_BIGINT;
           default:
         // TODO(aaron): Support BINARY, VARBINARY, LONGVARBINARY, DISTINCT,
         // BLOB, ARRAY, STRUCT, REF, JAVA_OBJECT.
