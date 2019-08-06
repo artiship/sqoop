@@ -551,7 +551,7 @@ task realDocs(type: Exec, dependsOn: ['relnotes', 'javadoc']) {
     commandLine "make", "-C", "$projectDir/src/docs", "BUILDROOT=$buildDir", "VERSION=$version"
 }
 
-task docs(dependsOn: ['realDocs', 'relnotes', 'javadoc']) {
+task docs() {
     //placeholder
 }
 def $mvnRepo = System.getProperty("mvnRepo", "snapshots")
