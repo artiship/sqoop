@@ -18,16 +18,6 @@
 
 package org.apache.sqoop.tool;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.logging.Log;
@@ -36,10 +26,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.sqoop.avro.AvroSchemaMismatchException;
-
 import org.apache.sqoop.SqoopOptions;
 import org.apache.sqoop.SqoopOptions.InvalidOptionsException;
+import org.apache.sqoop.avro.AvroSchemaMismatchException;
 import org.apache.sqoop.cli.RelatedOptions;
 import org.apache.sqoop.cli.ToolOptions;
 import org.apache.sqoop.config.ConfigurationHelper;
@@ -58,8 +47,18 @@ import org.apache.sqoop.util.AppendUtils;
 import org.apache.sqoop.util.ClassLoaderStack;
 import org.apache.sqoop.util.ImportException;
 
-import static org.apache.sqoop.manager.SupportedManagers.MYSQL;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.List;
+import java.util.Map;
+
 import static org.apache.commons.lang3.StringUtils.startsWith;
+import static org.apache.sqoop.manager.SupportedManagers.MYSQL;
 
 /**
  * Tool that performs database imports to HDFS.
@@ -1084,9 +1083,6 @@ public class ImportTool extends BaseSqoopTool {
 	    } else if (allTables && options.isValidationEnabled()) {
 	      throw new InvalidOptionsException("Validation is not supported for "
 	          + "all tables but single table only.");
-	    } else if (options.getSqlQuery() != null && options.isValidationEnabled()) {
-	      throw new InvalidOptionsException("Validation is not supported for "
-	          + "free from query but single table only.");
 	    } else if (options.getWhereClause() != null
 	        && options.isValidationEnabled()) {
 	      throw new InvalidOptionsException("Validation is not supported for "

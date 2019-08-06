@@ -1023,8 +1023,8 @@ public abstract class SqlManager
   @Override
   public long getTableRowCountByQuery(String sqlQuery) throws SQLException{
     release(); // Release any previous ResultSet
-
-    return getRowCount("SELECT COUNT(*) FROM (" + sqlQuery + ")");
+    String rawQuery = sqlQuery.replace(SUBSTITUTE_TOKEN, " (1 = 1) ");
+    return getRowCount("SELECT COUNT(*) FROM (" + rawQuery + ") a");
   }
 
   private long getRowCount(String countQuery) throws SQLException {
