@@ -18,6 +18,26 @@
 
 package org.apache.sqoop;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.sqoop.accumulo.AccumuloConstants;
+import org.apache.sqoop.lib.DelimiterSet;
+import org.apache.sqoop.lib.LargeObjectLoader;
+import org.apache.sqoop.mapreduce.mainframe.MainframeConfiguration;
+import org.apache.sqoop.mapreduce.parquet.ParquetJobConfiguratorImplementation;
+import org.apache.sqoop.tool.BaseSqoopTool;
+import org.apache.sqoop.tool.SqoopTool;
+import org.apache.sqoop.util.CredentialsUtil;
+import org.apache.sqoop.util.LoggingUtils;
+import org.apache.sqoop.util.RandomHash;
+import org.apache.sqoop.util.SqoopJsonUtil;
+import org.apache.sqoop.util.StoredAsProperty;
+import org.apache.sqoop.util.password.CredentialProviderHelper;
+import org.apache.sqoop.validation.AbortOnFailureHandler;
+import org.apache.sqoop.validation.AbsoluteValidationThreshold;
+import org.apache.sqoop.validation.RowCountValidator;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -30,27 +50,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.sqoop.accumulo.AccumuloConstants;
-import org.apache.sqoop.mapreduce.mainframe.MainframeConfiguration;
-import org.apache.sqoop.mapreduce.parquet.ParquetJobConfiguratorImplementation;
-import org.apache.sqoop.tool.BaseSqoopTool;
-import org.apache.sqoop.util.CredentialsUtil;
-import org.apache.sqoop.util.LoggingUtils;
-import org.apache.sqoop.util.SqoopJsonUtil;
-import org.apache.sqoop.util.password.CredentialProviderHelper;
-import org.apache.sqoop.validation.AbortOnFailureHandler;
-import org.apache.sqoop.validation.AbsoluteValidationThreshold;
-import org.apache.sqoop.validation.RowCountValidator;
-
-import org.apache.sqoop.lib.DelimiterSet;
-import org.apache.sqoop.lib.LargeObjectLoader;
-import org.apache.sqoop.tool.SqoopTool;
-import org.apache.sqoop.util.RandomHash;
-import org.apache.sqoop.util.StoredAsProperty;
 
 import static org.apache.sqoop.Sqoop.SQOOP_RETHROW_PROPERTY;
 import static org.apache.sqoop.mapreduce.parquet.ParquetJobConfiguratorImplementation.HADOOP;
@@ -346,6 +345,9 @@ public class SqoopOptions implements Cloneable {
   // exclude these tables when importing all tables.
   @StoredAsProperty("import.all_tables.exclude")
   private String allTablesExclude;
+
+  @StoredAsProperty("import.all_tables.prefix")
+  private String allTablesPrefix;
 
   // HDFS paths for "old" and "new" datasets in merge tool.
   @StoredAsProperty("merge.old.path") private String mergeOldPath;
@@ -2394,11 +2396,19 @@ public class SqoopOptions implements Cloneable {
     this.allTablesExclude = exclude;
   }
 
+  public void setAllTablesPrefix(String prefix) {
+    this.allTablesPrefix = prefix;
+  }
+
   /**
    * Get the tables to be excluded when doing all table import.
    */
   public String getAllTablesExclude() {
     return this.allTablesExclude;
+  }
+
+  public String getAllTablesPrefix() {
+    return this.allTablesPrefix;
   }
 
   /**

@@ -18,20 +18,20 @@
 
 package org.apache.sqoop.tool;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.apache.sqoop.SqoopOptions;
 import org.apache.sqoop.SqoopOptions.InvalidOptionsException;
 import org.apache.sqoop.cli.RelatedOptions;
 import org.apache.sqoop.util.ImportException;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Tool that performs database imports of all tables in a database to HDFS.
@@ -69,6 +69,10 @@ public class ImportAllTablesTool extends ImportTool {
     if (in.hasOption(ALL_TABLE_EXCLUDES_ARG)) {
       out.setAllTablesExclude(in.getOptionValue(ALL_TABLE_EXCLUDES_ARG));
     }
+
+    if (in.hasOption(ALL_TABLE_PREFIX_ARG)) {
+      out.setAllTablesPrefix(in.getOptionValue(ALL_TABLE_PREFIX_ARG));
+    }
   }
 
   @Override
@@ -92,12 +96,27 @@ public class ImportAllTablesTool extends ImportTool {
         LOG.error("manager.listTables() returned null");
         return 1;
       } else {
+        String allTablesPrefix = options.getAllTablesPrefix();
         for (String tableName : tables) {
+          if(StringUtils.isNotEmpty(allTablesPrefix) && !tableName.startsWith(allTablesPrefix)) {
+            continue;
+          }
+
           if (excludes.contains(tableName)) {
-            System.out.println("Skipping table: " + tableName);
+            LOG.info("Skipping table: " + tableName);
           } else {
             SqoopOptions clonedOptions = (SqoopOptions) options.clone();
-            clonedOptions.setTableName(tableName);
+            clonedOptions.setSqlQuery("select " + StringUtils.join(manager.getColumnNames(tableName), ",")
+                    + " from " + tableName
+                    + " where $CONDITIONS");
+            if (StringUtils.isNotEmpty(clonedOptions.getHivePartitionValue())) {
+              clonedOptions.setHivePartitionValue(clonedOptions.getHivePartitionValue() + "/shard=" + tableName);
+            }
+
+            LOG.info("Import table " + tableName
+                    + " partition key=" + clonedOptions.getHivePartitionKey()
+                    + " partition value=" + clonedOptions.getHivePartitionValue());
+
             importTable(clonedOptions);
           }
         }

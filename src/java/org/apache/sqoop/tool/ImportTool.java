@@ -674,15 +674,6 @@ public class ImportTool extends BaseSqoopTool {
           .hasArg().withDescription("Table to read")
           .withLongOpt(TABLE_ARG)
           .create());
-      importOpts.addOption(OptionBuilder.withArgName("col,col,col...")
-          .hasArg().withDescription("Columns to import from table")
-          .withLongOpt(COLUMNS_ARG)
-          .create());
-      importOpts.addOption(OptionBuilder.withArgName("column-name")
-          .hasArg()
-          .withDescription("Column of the table used to split work units")
-          .withLongOpt(SPLIT_BY_ARG)
-          .create());
       importOpts
         .addOption(OptionBuilder
           .withArgName("size")
@@ -691,21 +682,9 @@ public class ImportTool extends BaseSqoopTool {
             "Upper Limit of rows per split for split columns of Date/Time/Timestamp and integer types. For date or timestamp fields it is calculated in seconds. split-limit should be greater than 0")
           .withLongOpt(SPLIT_LIMIT_ARG)
           .create());
-      importOpts.addOption(OptionBuilder.withArgName("where clause")
-          .hasArg().withDescription("WHERE clause to use during import")
-          .withLongOpt(WHERE_ARG)
-          .create());
       importOpts.addOption(OptionBuilder
           .withDescription("Imports data in append mode")
           .withLongOpt(APPEND_ARG)
-          .create());
-      importOpts.addOption(OptionBuilder
-          .withDescription("Imports data in delete mode")
-          .withLongOpt(DELETE_ARG)
-          .create());
-      importOpts.addOption(OptionBuilder.withArgName("dir")
-          .hasArg().withDescription("HDFS plain table destination")
-          .withLongOpt(TARGET_DIR_ARG)
           .create());
       importOpts.addOption(OptionBuilder.withArgName("statement")
           .hasArg()
@@ -725,6 +704,26 @@ public class ImportTool extends BaseSqoopTool {
 
       addValidationOpts(importOpts);
     }
+
+    importOpts.addOption(OptionBuilder.withArgName("dir")
+                                      .hasArg().withDescription("HDFS plain table destination")
+                                      .withLongOpt(TARGET_DIR_ARG)
+                                      .create());
+
+    importOpts.addOption(OptionBuilder.withArgName("col,col,col...")
+                                      .hasArg().withDescription("Columns to import from table")
+                                      .withLongOpt(COLUMNS_ARG)
+                                      .create());
+
+    importOpts.addOption(OptionBuilder.withArgName("column-name")
+                                      .hasArg()
+                                      .withDescription("Column of the table used to split work units")
+                                      .withLongOpt(SPLIT_BY_ARG)
+                                      .create());
+
+    importOpts.addOption(OptionBuilder.withDescription("Imports data in delete mode")
+                                      .withLongOpt(DELETE_ARG)
+                                      .create());
 
     importOpts.addOption(OptionBuilder.withArgName("dir")
         .hasArg().withDescription("HDFS parent for table destination")
@@ -909,24 +908,8 @@ public class ImportTool extends BaseSqoopTool {
           out.setTableName(in.getOptionValue(TABLE_ARG));
         }
 
-        if (in.hasOption(COLUMNS_ARG)) {
-          String[] cols= in.getOptionValue(COLUMNS_ARG).split(",");
-          for (int i=0; i<cols.length; i++) {
-            cols[i] = cols[i].trim();
-          }
-          out.setColumns(cols);
-        }
-
-        if (in.hasOption(SPLIT_BY_ARG)) {
-          out.setSplitByCol(in.getOptionValue(SPLIT_BY_ARG));
-        }
-
         if (in.hasOption(SPLIT_LIMIT_ARG)) {
             out.setSplitLimit(Integer.parseInt(in.getOptionValue(SPLIT_LIMIT_ARG)));
-        }
-
-        if (in.hasOption(WHERE_ARG)) {
-          out.setWhereClause(in.getOptionValue(WHERE_ARG));
         }
 
         if (in.hasOption(TARGET_DIR_ARG)) {
@@ -935,14 +918,6 @@ public class ImportTool extends BaseSqoopTool {
 
         if (in.hasOption(APPEND_ARG)) {
           out.setAppendMode(true);
-        }
-
-        if (in.hasOption(DELETE_ARG)) {
-          out.setDeleteMode(true);
-        }
-
-        if (in.hasOption(SQL_QUERY_ARG)) {
-          out.setSqlQuery(in.getOptionValue(SQL_QUERY_ARG));
         }
 
         if (in.hasOption(SQL_QUERY_BOUNDARY)) {
@@ -954,6 +929,26 @@ public class ImportTool extends BaseSqoopTool {
         }
 
         applyValidationOptions(in, out);
+      }
+
+      if (in.hasOption(COLUMNS_ARG)) {
+        String[] cols= in.getOptionValue(COLUMNS_ARG).split(",");
+        for (int i=0; i<cols.length; i++) {
+          cols[i] = cols[i].trim();
+        }
+        out.setColumns(cols);
+      }
+
+      if (in.hasOption(WHERE_ARG)) {
+        out.setWhereClause(in.getOptionValue(WHERE_ARG));
+      }
+
+      if (in.hasOption(DELETE_ARG)) {
+        out.setDeleteMode(true);
+      }
+
+      if (in.hasOption(SQL_QUERY_ARG)) {
+        out.setSqlQuery(in.getOptionValue(SQL_QUERY_ARG));
       }
 
       if (in.hasOption(WAREHOUSE_DIR_ARG)) {
@@ -1080,9 +1075,6 @@ public class ImportTool extends BaseSqoopTool {
 	              + SPLIT_BY_ARG + "." + HELP_STR);
 	    } else if (options.isDirect()) {
 	      validateDirectImportOptions(options);
-	    } else if (allTables && options.isValidationEnabled()) {
-	      throw new InvalidOptionsException("Validation is not supported for "
-	          + "all tables but single table only.");
 	    } else if (options.getWhereClause() != null
 	        && options.isValidationEnabled()) {
 	      throw new InvalidOptionsException("Validation is not supported for "

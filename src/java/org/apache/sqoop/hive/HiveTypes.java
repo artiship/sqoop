@@ -70,6 +70,8 @@ public final class HiveTypes {
           case Types.TIME:
           case Types.TIMESTAMP:
           case Types.CLOB:
+          case Types.BIT:
+          case Types.BOOLEAN:
               return HIVE_TYPE_STRING;
           case Types.NUMERIC:
           case Types.DECIMAL:
@@ -77,9 +79,6 @@ public final class HiveTypes {
           case Types.DOUBLE:
           case Types.REAL:
               return HIVE_TYPE_DOUBLE;
-          case Types.BIT:
-          case Types.BOOLEAN:
-              return HIVE_TYPE_BOOLEAN;
           default:
         // TODO(aaron): Support BINARY, VARBINARY, LONGVARBINARY, DISTINCT,
         // BLOB, ARRAY, STRUCT, REF, JAVA_OBJECT.

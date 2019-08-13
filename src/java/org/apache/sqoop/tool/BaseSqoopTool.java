@@ -206,6 +206,7 @@ public abstract class BaseSqoopTool extends org.apache.sqoop.tool.SqoopTool {
 
   // Arguments for all table imports.
   public static final String ALL_TABLE_EXCLUDES_ARG = "exclude-tables";
+  public static final String ALL_TABLE_PREFIX_ARG = "table-prefix";
 
   // HBase arguments.
   public static final String HBASE_TABLE_ARG = "hbase-table";
