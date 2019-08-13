@@ -20,7 +20,6 @@ package org.apache.sqoop.tool;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.sqoop.SqoopOptions;
@@ -32,6 +31,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 /**
  * Tool that performs database imports of all tables in a database to HDFS.
@@ -98,7 +99,7 @@ public class ImportAllTablesTool extends ImportTool {
       } else {
         String allTablesPrefix = options.getAllTablesPrefix();
         for (String tableName : tables) {
-          if(StringUtils.isNotEmpty(allTablesPrefix) && !tableName.startsWith(allTablesPrefix)) {
+          if(isNotEmpty(allTablesPrefix) && !tableName.startsWith(allTablesPrefix)) {
             continue;
           }
 
@@ -106,18 +107,20 @@ public class ImportAllTablesTool extends ImportTool {
             LOG.info("Skipping table: " + tableName);
           } else {
             SqoopOptions clonedOptions = (SqoopOptions) options.clone();
-            clonedOptions.setSqlQuery("select " + StringUtils.join(manager.getColumnNames(tableName), ",")
-                    + " from " + tableName
-                    + " where $CONDITIONS");
-            if (StringUtils.isNotEmpty(clonedOptions.getHivePartitionValue())) {
-              clonedOptions.setHivePartitionValue(clonedOptions.getHivePartitionValue() + "/shard=" + tableName);
+
+            clonedOptions.setTableName(tableName);
+
+            if (isNotEmpty(clonedOptions.getHivePartitionValue())) {
+              clonedOptions.setHivePartitionKey(isNotEmpty(clonedOptions.getHivePartitionValue())
+                      ? clonedOptions.getHivePartitionKey() + ",shard" : "shard");
+
+              clonedOptions.setHivePartitionValue(isNotEmpty(clonedOptions.getHivePartitionValue())
+                      ? clonedOptions.getHivePartitionValue() + "," + tableName : tableName);
             }
 
             LOG.info("Import table " + tableName
                     + " partition key=" + clonedOptions.getHivePartitionKey()
                     + " partition value=" + clonedOptions.getHivePartitionValue());
-
-            clonedOptions.setColumns(null);
 
             importTable(clonedOptions);
           }

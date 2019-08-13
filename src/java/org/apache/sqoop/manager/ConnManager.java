@@ -469,7 +469,7 @@ public abstract class ConnManager {
       columnTypeNames = getColumnTypeNamesForProcedure(callName);
     } else {
       // This is based on an arbitrary query.
-      String query = sqlQuery == null ? options.getSqlQuery() : sqlQuery;
+      String query = sqlQuery;
       if (query.indexOf(SqlManager.SUBSTITUTE_TOKEN) == -1) {
         throw new RuntimeException("Query [" + query + "] must contain '"
             + SqlManager.SUBSTITUTE_TOKEN + "' in WHERE clause.");
