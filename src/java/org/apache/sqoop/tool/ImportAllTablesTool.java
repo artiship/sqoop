@@ -110,13 +110,11 @@ public class ImportAllTablesTool extends ImportTool {
 
             clonedOptions.setTableName(tableName);
 
-            if (isNotEmpty(clonedOptions.getHivePartitionValue())) {
-              clonedOptions.setHivePartitionKey(isNotEmpty(clonedOptions.getHivePartitionValue())
-                      ? clonedOptions.getHivePartitionKey() + ",shard" : "shard");
+            clonedOptions.setHivePartitionKey(isNotEmpty(clonedOptions.getHivePartitionValue())
+                    ? clonedOptions.getHivePartitionKey() + ",shard" : "shard");
 
-              clonedOptions.setHivePartitionValue(isNotEmpty(clonedOptions.getHivePartitionValue())
-                      ? clonedOptions.getHivePartitionValue() + "," + tableName : tableName);
-            }
+            clonedOptions.setHivePartitionValue(isNotEmpty(clonedOptions.getHivePartitionValue())
+                    ? clonedOptions.getHivePartitionValue() + "," + tableName : tableName);
 
             LOG.info("Import table " + tableName
                     + " partition key=" + clonedOptions.getHivePartitionKey()
