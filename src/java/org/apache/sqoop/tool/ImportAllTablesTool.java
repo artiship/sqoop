@@ -117,6 +117,8 @@ public class ImportAllTablesTool extends ImportTool {
                     + " partition key=" + clonedOptions.getHivePartitionKey()
                     + " partition value=" + clonedOptions.getHivePartitionValue());
 
+            clonedOptions.setColumns(null);
+
             importTable(clonedOptions);
           }
         }
