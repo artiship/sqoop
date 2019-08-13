@@ -54,9 +54,15 @@ public class ImportAllTablesTool extends ImportTool {
     RelatedOptions importOpts = super.getImportOptions();
 
     importOpts.addOption(OptionBuilder.withArgName("tables")
-        .hasArg().withDescription("Tables to exclude when importing all tables")
-        .withLongOpt(ALL_TABLE_EXCLUDES_ARG)
-        .create());
+                                      .hasArg()
+                                      .withDescription("Tables to exclude when importing all tables")
+                                      .withLongOpt(ALL_TABLE_EXCLUDES_ARG)
+                                      .create());
+
+    importOpts.addOption(OptionBuilder.withArgName("table prefix")
+                                      .hasArg().withDescription("Match table names start with preifx")
+                                      .withLongOpt(ALL_TABLE_PREFIX_ARG)
+                                      .create());
 
     return importOpts;
   }
@@ -99,17 +105,18 @@ public class ImportAllTablesTool extends ImportTool {
       } else {
         String allTablesPrefix = options.getAllTablesPrefix();
         for (String tableName : tables) {
-          if(isNotEmpty(allTablesPrefix) && !tableName.startsWith(allTablesPrefix)) {
+          if (excludes.contains(tableName)) {
+            LOG.info("Skipping table: " + tableName);
             continue;
           }
 
-          if (excludes.contains(tableName)) {
-            LOG.info("Skipping table: " + tableName);
-          } else {
-            SqoopOptions clonedOptions = (SqoopOptions) options.clone();
+          if(!tableName.startsWith(allTablesPrefix)) {
+            continue;
+          }
 
-            clonedOptions.setTableName(tableName);
+          SqoopOptions clonedOptions = (SqoopOptions) options.clone();
 
+          if (isNotEmpty(allTablesPrefix)) {
             clonedOptions.setHivePartitionKey(isNotEmpty(clonedOptions.getHivePartitionValue())
                     ? clonedOptions.getHivePartitionKey() + ",shard" : "shard");
 
@@ -119,9 +126,10 @@ public class ImportAllTablesTool extends ImportTool {
             LOG.info("Import table " + tableName
                     + " partition key=" + clonedOptions.getHivePartitionKey()
                     + " partition value=" + clonedOptions.getHivePartitionValue());
-
-            importTable(clonedOptions);
           }
+
+          clonedOptions.setTableName(tableName);
+          importTable(clonedOptions);
         }
       }
     } catch (IOException ioe) {
