@@ -939,6 +939,10 @@ public class ImportTool extends BaseSqoopTool {
         out.setColumns(cols);
       }
 
+      if (in.hasOption(SPLIT_BY_ARG)) {
+        out.setSplitByCol(in.getOptionValue(SPLIT_BY_ARG));
+      }
+
       if (in.hasOption(WHERE_ARG)) {
         out.setWhereClause(in.getOptionValue(WHERE_ARG));
       }
