@@ -18,30 +18,29 @@
 
 package org.apache.sqoop.hive;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Properties;
-
 import org.apache.avro.Schema;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.sqoop.SqoopOptions;
 import org.apache.sqoop.avro.AvroUtil;
 import org.apache.sqoop.io.CodecMap;
-
-import org.apache.sqoop.SqoopOptions;
 import org.apache.sqoop.manager.ConnManager;
 import org.apache.sqoop.util.FileSystemUtil;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import static org.apache.sqoop.mapreduce.parquet.ParquetConstants.SQOOP_PARQUET_AVRO_SCHEMA_KEY;
 
@@ -167,11 +166,16 @@ public class TableDefWriter {
     }
 
     boolean first = true;
-    String partitionKey = options.getHivePartitionKey();
+    String partitionKeys = options.getHivePartitionKey();
     for (String col : colNames) {
-      if (col.equals(partitionKey)) {
-        throw new IllegalArgumentException("Partition key " + col + " cannot "
-            + "be a column to import.");
+      if (partitionKeys != null) {
+        String[] pks = partitionKeys.split(",");
+        for (String pk : pks) {
+          if (col.equals(pk)) {
+            throw new IllegalArgumentException("Partition key " + col + " cannot "
+                    + "be a column to import.");
+          }
+        }
       }
 
       if (!first) {
@@ -202,11 +206,16 @@ public class TableDefWriter {
       sb.append("COMMENT 'Imported by sqoop on " + curDateStr + "' ");
     }
 
-    if (partitionKey != null) {
-      sb.append("PARTITIONED BY (")
-        .append(partitionKey)
-        .append(" STRING) ");
-     }
+    if (partitionKeys != null) {
+      sb.append("PARTITIONED BY (");
+      // 修正拼接每个分区列
+      String[] pks = partitionKeys.split(",");
+      for (String pk : pks) {
+        sb.append(pk).append(" STRING,");
+      }
+      sb.setLength(sb.length()-1);
+      sb.append(")");
+    }
 
     if (SqoopOptions.FileLayout.ParquetFile.equals(options.getFileLayout())) {
       sb.append("STORED AS PARQUET");
@@ -286,10 +295,18 @@ public class TableDefWriter {
     sb.append('`');
 
     if (options.getHivePartitionKey() != null) {
-      sb.append(" PARTITION (")
-        .append(options.getHivePartitionKey())
-        .append("='").append(options.getHivePartitionValue())
-        .append("')");
+      String partitionKeys = options.getHivePartitionKey();
+      String partitionValues = options.getHivePartitionValue();
+      String[] pks = partitionKeys.split(",");
+      String[] pvs = partitionValues.split(",");
+      sb.append(" PARTITION (");
+      for (int i = 0; i < pks.length; i++) {
+        if (i != 0) {
+          sb.append(" , ");
+        }
+        sb.append(pks[i]).append("='").append(pvs[i]).append("'");
+      }
+      sb.append(")");
     }
 
     LOG.debug("Load statement: " + sb.toString());
