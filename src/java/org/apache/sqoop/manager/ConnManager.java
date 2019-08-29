@@ -121,13 +121,13 @@ public abstract class ConnManager {
     } else if (sqlType == Types.DECIMAL) {
       return "java.math.BigDecimal";
     } else if (sqlType == Types.BIT) {
-      return "Boolean";
+      return "Long";
     } else if (sqlType == Types.BOOLEAN) {
-      return "Boolean";
+      return "Long";
     } else if (sqlType == Types.TINYINT) {
-      return "Integer";
+      return "Long";
     } else if (sqlType == Types.SMALLINT) {
-      return "Integer";
+      return "Long";
     } else if (sqlType == Types.BIGINT) {
       return "Long";
     } else if (sqlType == Types.REAL) {
@@ -188,31 +188,26 @@ public abstract class ConnManager {
     case Types.TINYINT:
     case Types.SMALLINT:
     case Types.INTEGER:
-      return Type.INT;
     case Types.BIGINT:
-      return Type.LONG;
     case Types.BIT:
     case Types.BOOLEAN:
-      return Type.BOOLEAN;
+      return Type.LONG;
     case Types.REAL:
-      return Type.FLOAT;
     case Types.FLOAT:
     case Types.DOUBLE:
-      return Type.DOUBLE;
     case Types.NUMERIC:
     case Types.DECIMAL:
-      return Type.STRING;
+      return Type.DOUBLE;
     case Types.CHAR:
     case Types.VARCHAR:
     case Types.LONGVARCHAR:
     case Types.LONGNVARCHAR:
     case Types.NVARCHAR:
     case Types.NCHAR:
-      return Type.STRING;
     case Types.DATE:
     case Types.TIME:
     case Types.TIMESTAMP:
-      return Type.LONG;
+      return Type.STRING;
     case Types.BLOB:
     case Types.BINARY:
     case Types.VARBINARY:

@@ -41,7 +41,11 @@ public final class HiveTypes {
       switch (sqlType) {
           case Types.INTEGER:
           case Types.SMALLINT:
-              return "INT";
+          case Types.BIT:
+          case Types.BOOLEAN:
+          case Types.TINYINT:
+          case Types.BIGINT:
+              return "BIGINT";
           case Types.VARCHAR:
           case Types.CHAR:
           case Types.LONGVARCHAR:
@@ -59,13 +63,6 @@ public final class HiveTypes {
           case Types.DOUBLE:
           case Types.REAL:
               return "DOUBLE";
-          case Types.BIT:
-          case Types.BOOLEAN:
-              return "BOOLEAN";
-          case Types.TINYINT:
-              return "TINYINT";
-          case Types.BIGINT:
-              return "BIGINT";
           default:
         // TODO(aaron): Support BINARY, VARBINARY, LONGVARBINARY, DISTINCT,
         // BLOB, ARRAY, STRUCT, REF, JAVA_OBJECT.

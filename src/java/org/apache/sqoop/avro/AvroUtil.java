@@ -44,6 +44,7 @@ import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +52,7 @@ import java.util.Map;
  * The service class provides methods for creating and converting Avro objects.
  */
 public final class AvroUtil {
+  public static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
   public static boolean isDecimal(Schema.Field field) {
     return isDecimal(field.schema());
   }
@@ -81,11 +83,11 @@ public final class AvroUtil {
         return o.toString();
       }
     } else if (o instanceof Date) {
-      return ((Date) o).getTime();
+      return ((Date) o).toLocalDate().toString();
     } else if (o instanceof Time) {
-      return ((Time) o).getTime();
+      return ((Time) o).toLocalTime().format(formatter);
     } else if (o instanceof Timestamp) {
-      return ((Timestamp) o).getTime();
+      return ((Timestamp) o).toLocalDateTime().format(formatter);
     } else if (o instanceof BytesWritable) {
       BytesWritable bw = (BytesWritable) o;
       return ByteBuffer.wrap(bw.getBytes(), 0, bw.getLength());
