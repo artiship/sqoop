@@ -287,6 +287,9 @@ public class SqoopOptions implements Cloneable {
   @StoredAsProperty("import.all_tables.exclude")
   private String allTablesExclude;
 
+  @StoredAsProperty("import.all_tables.prefix")
+  private String allTablesPrefix;
+
   // HDFS paths for "old" and "new" datasets in merge tool.
   @StoredAsProperty("merge.old.path") private String mergeOldPath;
   @StoredAsProperty("merge.new.path") private String mergeNewPath;
@@ -2261,6 +2264,14 @@ public class SqoopOptions implements Cloneable {
    */
   public String getAllTablesExclude() {
     return this.allTablesExclude;
+  }
+
+  public void setAllTablesPrefix(String prefix) {
+    this.allTablesPrefix = prefix;
+  }
+
+  public String getAllTablesPrefix() {
+    return this.allTablesPrefix;
   }
 
   /**

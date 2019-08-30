@@ -25,6 +25,7 @@ import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -33,6 +34,8 @@ import com.cloudera.sqoop.SqoopOptions.InvalidOptionsException;
 import com.cloudera.sqoop.cli.RelatedOptions;
 import com.cloudera.sqoop.hive.HiveImport;
 import com.cloudera.sqoop.util.ImportException;
+
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 /**
  * Tool that performs database imports of all tables in a database to HDFS.
@@ -58,6 +61,11 @@ public class ImportAllTablesTool extends com.cloudera.sqoop.tool.ImportTool {
         .withLongOpt(ALL_TABLE_EXCLUDES_ARG)
         .create());
 
+    importOpts.addOption(OptionBuilder.withArgName("table prefix")
+            .hasArg().withDescription("Match table names start with preifx")
+            .withLongOpt(ALL_TABLE_PREFIX_ARG)
+            .create());
+
     return importOpts;
   }
 
@@ -69,6 +77,10 @@ public class ImportAllTablesTool extends com.cloudera.sqoop.tool.ImportTool {
 
     if (in.hasOption(ALL_TABLE_EXCLUDES_ARG)) {
       out.setAllTablesExclude(in.getOptionValue(ALL_TABLE_EXCLUDES_ARG));
+    }
+
+    if (in.hasOption(ALL_TABLE_PREFIX_ARG)) {
+      out.setAllTablesPrefix(in.getOptionValue(ALL_TABLE_PREFIX_ARG));
     }
   }
 
@@ -98,15 +110,44 @@ public class ImportAllTablesTool extends com.cloudera.sqoop.tool.ImportTool {
         return 1;
       } else {
         int numMappers = options.getNumMappers();
+        String allTablesPrefix = options.getAllTablesPrefix();
         for (String tableName : tables) {
+          if(isNotEmpty(allTablesPrefix) && !tableName.startsWith(allTablesPrefix)) {
+            continue;
+          }
+
           if (excludes.contains(tableName)) {
-            System.out.println("Skipping table: " + tableName);
+            LOG.info("Skipping table: " + tableName);
           } else {
+            if (excludes.contains(tableName)) {
+              LOG.info("Skipping table: " + tableName);
+              continue;
+            }
+
+            if (!tableName.startsWith(allTablesPrefix)) {
+              continue;
+            }
             /*
              * Number of mappers could be potentially reset in imports.  So
              * we set it to the configured number before each import.
              */
             options.setNumMappers(numMappers);
+
+            SqoopOptions clonedOptions = (SqoopOptions) options.clone();
+
+            if(isNotEmpty(allTablesPrefix)) {
+              clonedOptions.setHivePartitionKey(isNotEmpty(clonedOptions.getHivePartitionValue())
+                      ? clonedOptions.getHivePartitionKey() + ",_shard" : "_shard");
+
+              clonedOptions.setHivePartitionValue(isNotEmpty(clonedOptions.getHivePartitionValue())
+                      ? clonedOptions.getHivePartitionValue() + "," + tableName : tableName);
+
+              LOG.info("Import table " + tableName
+                      + " partition key=" + clonedOptions.getHivePartitionKey()
+                      + " partition value=" + clonedOptions.getHivePartitionValue());
+            }
+
+            clonedOptions.setTableName(tableName);
             importTable(options, tableName, hiveImport);
           }
         }
