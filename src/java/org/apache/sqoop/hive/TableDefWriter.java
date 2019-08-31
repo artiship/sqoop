@@ -169,11 +169,16 @@ public class TableDefWriter {
     }
 
     boolean first = true;
-    String partitionKey = options.getHivePartitionKey();
+    String partitionKeys = options.getHivePartitionKey();
     for (String col : colNames) {
-      if (col.equals(partitionKey)) {
-        throw new IllegalArgumentException("Partition key " + col + " cannot "
-            + "be a column to import.");
+      if (partitionKeys != null) {
+        String[] pks = partitionKeys.split(",");
+        for (String pk : pks) {
+          if (col.equals(pk)) {
+            throw new IllegalArgumentException("Partition key " + col + " cannot "
+                    + "be a column to import.");
+          }
+        }
       }
 
       if (!first) {
@@ -208,10 +213,14 @@ public class TableDefWriter {
       sb.append("COMMENT 'Imported by sqoop on " + curDateStr + "' ");
     }
 
-    if (partitionKey != null) {
-      sb.append("PARTITIONED BY (")
-        .append(partitionKey)
-        .append(" STRING) ");
+    if (partitionKeys != null) {
+      sb.append("PARTITIONED BY (");
+      String[] pks = partitionKeys.split(",");
+      for (String pk : pks) {
+        sb.append(pk).append(" STRING,");
+      }
+      sb.setLength(sb.length()-1);
+      sb.append(")");
      }
 
     sb.append("ROW FORMAT DELIMITED FIELDS TERMINATED BY '");
@@ -258,10 +267,18 @@ public class TableDefWriter {
     sb.append('`');
 
     if (options.getHivePartitionKey() != null) {
-      sb.append(" PARTITION (")
-        .append(options.getHivePartitionKey())
-        .append("='").append(options.getHivePartitionValue())
-        .append("')");
+      String partitionKeys = options.getHivePartitionKey();
+      String partitionValues = options.getHivePartitionValue();
+      String[] pks = partitionKeys.split(",");
+      String[] pvs = partitionValues.split(",");
+      sb.append(" PARTITION (");
+      for (int i = 0; i < pks.length; i++) {
+        if (i != 0) {
+          sb.append(" , ");
+        }
+        sb.append(pks[i]).append("='").append(pvs[i]).append("'");
+      }
+      sb.append(")");
     }
 
     LOG.debug("Load statement: " + sb.toString());

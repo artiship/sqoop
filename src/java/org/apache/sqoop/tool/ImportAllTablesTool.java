@@ -25,7 +25,6 @@ import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -95,10 +94,6 @@ public class ImportAllTablesTool extends com.cloudera.sqoop.tool.ImportTool {
     }
 
     try {
-      if (options.doHiveImport()) {
-        hiveImport = new HiveImport(options, manager, options.getConf(), false);
-      }
-
       if (options.getAllTablesExclude() != null) {
         excludes.addAll(Arrays.asList(options.getAllTablesExclude().split(",")));
       }
@@ -137,7 +132,7 @@ public class ImportAllTablesTool extends com.cloudera.sqoop.tool.ImportTool {
 
             if(isNotEmpty(allTablesPrefix)) {
               clonedOptions.setHivePartitionKey(isNotEmpty(clonedOptions.getHivePartitionValue())
-                      ? clonedOptions.getHivePartitionKey() + ",_shard" : "_shard");
+                      ? clonedOptions.getHivePartitionKey() + ",`_shard`" : "`_shard`");
 
               clonedOptions.setHivePartitionValue(isNotEmpty(clonedOptions.getHivePartitionValue())
                       ? clonedOptions.getHivePartitionValue() + "," + tableName : tableName);
@@ -148,7 +143,12 @@ public class ImportAllTablesTool extends com.cloudera.sqoop.tool.ImportTool {
             }
 
             clonedOptions.setTableName(tableName);
-            importTable(options, tableName, hiveImport);
+
+            if (options.doHiveImport()) {
+              hiveImport = new HiveImport(clonedOptions, manager, options.getConf(), false);
+            }
+
+            importTable(clonedOptions, tableName, hiveImport);
           }
         }
       }
